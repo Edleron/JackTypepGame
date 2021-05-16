@@ -1,0 +1,2 @@
+# JackTypepGame
+Game Assingment Process
