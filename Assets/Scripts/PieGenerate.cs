@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using System;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -11,104 +13,79 @@ public class PieGenerate : MonoBehaviour
     public GameObject PieDef;
     public RectTransform targetParents;
 
-    enum WhellTypes { LvlOne, LvlTwo, LvlThree, LvlFour, LvlFive, LvlSix, LvlEight, LvlNine, LvlTen, LvlTwelfe };
+    internal enum WhellTypes { WheelOne, WheelTwo, WheelThree, WheelFour, WheelFive, WheelSix, WheelEight, WheelNine, WheelTen, WheelTwelve };
     [Header("Presents")]
-    [SerializeField] WhellTypes whellType;
+    [SerializeField] internal WhellTypes whellType;
 
-    List<GameObject> backgrounds = new List<GameObject>();
-    bool showBackgrounds = false;
-
-    #region Deletings
-    string itemName;
-    int cost;
-    float happies;
-    #endregion
+    [HideInInspector]
+    public List<WheelCore> MyList = new List<WheelCore>();
 
     #region Helper Metods
+    public void AddNew()
+    {
+        //Add a new index position to the end of our list
+        MyList.Add(new WheelCore("Harvey", -100, WheelCore.WinTypes.Lose, Color.white, "-100"));
+    }
+    public void Remove(int index)
+    {
+        //Remove an index position from our list at a point in our list array
+        MyList.RemoveAt(index);
+    }
+
     public void JusGenerate()
     {
-        Instantiate(PieDef, targetParents);
+        float filAmoundCalculated = (float)1 / MyList.Count;
+        Debug.LogError(filAmoundCalculated);
+        float angleCalculated = 360 / MyList.Count;
+        for (int i = 0; i < MyList.Count; i++)
+        {
+            GameObject clone = Instantiate(PieDef, targetParents) as GameObject;
+            clone.GetComponent<Image>().fillAmount = filAmoundCalculated;
+            clone.GetComponent<Image>().color = MyList[i].AnColor;
+            clone.GetComponent<RectTransform>().transform.Rotate(new Vector3(0, 0, i * angleCalculated));
+            clone.transform.GetChild(0).GetComponent<Text>().text = MyList[i].AnText;
+        }
     }
     #endregion
 
-    #region Unity Editor
-
-#if UNITY_EDITOR
-    [CustomEditor(typeof(PieGenerate))]
-    public class GenerateWhellEditor : Editor
+    #region Wheel
+    [System.Serializable]
+    public class WheelCore : IComparable<WheelCore>
     {
-        public override void OnInspectorGUI()
+        public enum WinTypes { Won, Lose };
+
+        public string AnName;
+        public int AnGain;
+        public WinTypes AnWinType;
+        public Color AnColor;
+        public string AnText;
+
+        public WheelCore()
         {
-            base.OnInspectorGUI();
-            PieGenerate pieGenerate = (PieGenerate)target;
-            //DrawDetails(pieGenerate);
-            DrawWheelLevel(pieGenerate);
-            CreatedLevelSystem(pieGenerate);
+
         }
 
-        private static void DrawWheelLevel(PieGenerate pieGenerate)
+        public WheelCore(string newName, int newGain, WinTypes newWinType, Color newColor, string newText)
         {
-            if (pieGenerate.whellType == WhellTypes.LvlOne)
+            AnName = newName;
+            AnGain = newGain;
+            AnWinType = newWinType;
+            AnColor = newColor;
+            AnText = newText;
+        }
+
+        //This method is required by the IComparable
+        //interface. 
+        public int CompareTo(WheelCore other)
+        {
+            if (other == null)
             {
-                EditorGUILayout.Space();
-                pieGenerate.showBackgrounds = EditorGUILayout.Foldout(pieGenerate.showBackgrounds, "Backgrounds", true);
-
-                if (pieGenerate.showBackgrounds)
-                {
-                    EditorGUI.indentLevel++;
-
-                    List<GameObject> list = pieGenerate.backgrounds;
-                    int size = Mathf.Max(0, EditorGUILayout.IntField("Size", list.Count));
-
-                    while (size > list.Count)
-                    {
-                        list.Add(null);
-                    }
-
-                    while (size < list.Count)
-                    {
-                        list.RemoveAt(list.Count - 1);
-                    }
-
-                    for (int i = 0; i < list.Count; i++)
-                    {
-                        list[i] = EditorGUILayout.ObjectField("Elements " + i, list[i], typeof(GameObject), true) as GameObject;
-                    }
-
-                    EditorGUI.indentLevel--;
-                }
+                return 1;
             }
-        }
 
-        /*
-        private static void DrawDetails(PieGenerate pieGenerate)
-        {
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Details");
-            EditorGUILayout.BeginHorizontal();
-
-            EditorGUILayout.LabelField("Name", GUILayout.MaxWidth(50));
-            pieGenerate.itemName = EditorGUILayout.TextField(pieGenerate.itemName);
-
-            EditorGUILayout.LabelField("Cost", GUILayout.MaxWidth(50));
-            pieGenerate.cost = EditorGUILayout.IntField(pieGenerate.cost);
-
-            EditorGUILayout.LabelField("Happies", GUILayout.MaxWidth(75));
-            pieGenerate.happies = EditorGUILayout.FloatField(pieGenerate.happies);
-
-            EditorGUILayout.EndHorizontal();           
-        }
-        */
-
-        private static void CreatedLevelSystem(PieGenerate pieGenerate)
-        {
-            EditorGUILayout.Space();
-            if (GUILayout.Button("Generate Circle Draw"))
-            {
-                pieGenerate.JusGenerate();
-            }
+            //Return the difference in power.
+            return AnGain - other.AnGain;
         }
     }
-#endif
     #endregion
 }
