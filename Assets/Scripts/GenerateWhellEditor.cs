@@ -23,7 +23,7 @@ public class GenerateWhellEditor : Editor
     {
         t = (PieGenerate)target;
         GetTarget = new SerializedObject(t);
-        ThisList = GetTarget.FindProperty("MyList"); // Find the List in our script and create a refrence of it
+        ThisList = GetTarget.FindProperty("MyList");
     }
 
     public override void OnInspectorGUI()
@@ -48,7 +48,6 @@ public class GenerateWhellEditor : Editor
     {
         GetTarget.Update();
 
-        //Choose how to display the list<> Example purposes only
         EditorGUILayout.Space();
         EditorGUILayout.Space();
         DisplayFieldType = (displayFieldType)EditorGUILayout.EnumPopup("", DisplayFieldType);
@@ -78,18 +77,15 @@ public class GenerateWhellEditor : Editor
         EditorGUILayout.Space();
         EditorGUILayout.Space();
 
-        //Or add a new item to the List<> with a button
         EditorGUILayout.LabelField("Add a new item with a button");
 
         if (GUILayout.Button("Add New"))
         {
-            t.MyList.Add(new PieGenerate.WheelCore("Wheel One", 100, PieGenerate.WheelCore.WinTypes.Won, Color.white, "100"));
+            t.MyList.Add(new WheelCore("Wheel One", 100, WheelCore.WinTypes.Won, Color.white, "100"));
         }
 
         EditorGUILayout.Space();
         EditorGUILayout.Space();
-
-        //Display our list to the inspector window
 
         for (int i = 0; i < ThisList.arraySize; i++)
         {
@@ -100,12 +96,8 @@ public class GenerateWhellEditor : Editor
             SerializedProperty MyColor = MyListRef.FindPropertyRelative("AnColor");
             SerializedProperty MyText = MyListRef.FindPropertyRelative("AnText");
 
-
-            // Display the property fields in two ways.
-
             if (DisplayFieldType == 0)
-            {// Choose to display automatic or custom field types. This is only for example to help display automatic and custom fields.
-             //1. Automatic, No customization <-- Choose me I'm automatic and easy to setup
+            {
                 EditorGUILayout.LabelField("Automatic Field By Property Type");
                 EditorGUILayout.PropertyField(MyName);
                 EditorGUILayout.PropertyField(MyGain);
@@ -113,7 +105,6 @@ public class GenerateWhellEditor : Editor
                 EditorGUILayout.PropertyField(MyColor);
                 EditorGUILayout.PropertyField(MyText);
 
-                // Array fields with remove at index
                 EditorGUILayout.Space();
                 EditorGUILayout.Space();
             }
@@ -141,7 +132,7 @@ public class GenerateWhellEditor : Editor
         GetTarget.ApplyModifiedProperties();
     }
 
-   
+
 
     private void DrawWheelLevel(PieGenerate pieGenerate)
     {

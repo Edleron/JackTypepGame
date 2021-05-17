@@ -5,67 +5,54 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    //1881
     private bool _isStarted;
-    private float[] _sectorsAngles;
     private float _finalAngle;
     private float _startAngle = 0;
     private float _currentLerpRotationTime;
+    private ResultCore result;
     public Button TurnButton;
     public GameObject Circle; 			
     public Text CoinsDeltaText; 		
-    public Text CurrentCoinsText; 		
+    public Text WalletAmountText; 		
     public int TurnCost = 300;			
-    public int CurrentCoinsAmount = 1000;	
+    public int CurrencyCoinsAmount = 2000;	
     public int PreviousCoinsAmount;
 
     private void Awake()
     {
-        PreviousCoinsAmount = CurrentCoinsAmount;
-        CurrentCoinsText.text = CurrentCoinsAmount.ToString();
+        PreviousCoinsAmount = CurrencyCoinsAmount;
+        WalletAmountText.text = CurrencyCoinsAmount.ToString();
     }
 
     public void TurnWheel()
     {
-        // Player has enough money to turn the wheel
-        if (CurrentCoinsAmount >= TurnCost)
+        if (CurrencyCoinsAmount >= TurnCost)
         {
-            _currentLerpRotationTime = 0f;
+            _currentLerpRotationTime = 0f;            
 
-            // Fill the necessary angles (for example if you want to have 12 sectors you need to fill the angles with 30 degrees step)
-            _sectorsAngles = new float[] { 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360 };
+            int fullCircles = 5;            
 
-            int fullCircles = 5;
-            float randomFinalAngle = _sectorsAngles[UnityEngine.Random.Range(0, _sectorsAngles.Length)];
-
-            // Here we set up how many circles our wheel should rotate before stop
-            _finalAngle = -(fullCircles * 360 + randomFinalAngle);
+            _finalAngle = -(fullCircles * 360 + DieAngleCalculates() - 60);
             _isStarted = true;
 
-            PreviousCoinsAmount = CurrentCoinsAmount;
+            PreviousCoinsAmount = CurrencyCoinsAmount;
 
-            // Decrease money for the turn
-            CurrentCoinsAmount -= TurnCost;          
+            CurrencyCoinsAmount -= TurnCost;         
 
-            // Animate coins
-            StartCoroutine(HideCoinsDelta());
+            StartCoroutine(HideCoinsDelta(false, TurnCost));
             StartCoroutine(UpdateCoinsAmount());
         }
     }
 
-    private void CreditUpdates(int awardCoins)
+    private float DieAngleCalculates()
     {
-        // Show wasted coins
-        CoinsDeltaText.text = "-" + TurnCost;
-        CoinsDeltaText.gameObject.SetActive(true);
-
-        // Show wın coins
-        CoinsDeltaText.text = "+" + awardCoins;
-        CoinsDeltaText.gameObject.SetActive(true);
+        result = GameObject.FindGameObjectWithTag("PieTag").GetComponent<PieGenerate>().GetResult();
+        return result.AtaFinalAngle;
     }
 
     private void GiveAwardByAngle()
     {
-        // Here you can set up rewards for every sector of wheel
         switch ((int)_startAngle)
         {
             case 0:
@@ -112,8 +99,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        // Make turn button non interactable if user has not enough money for the turn
-        if (_isStarted || CurrentCoinsAmount < TurnCost)
+        if (_isStarted || CurrencyCoinsAmount < TurnCost)
         {
             TurnButton.interactable = false;
             TurnButton.GetComponent<Image>().color = new Color(255, 255, 255, 0.5f);
@@ -127,25 +113,24 @@ public class GameManager : MonoBehaviour
         if (!_isStarted)
             return;
 
-        float maxLerpRotationTime = 4f;
+        float maxLerpRotationTime = 6f;
 
-        // increment timer once per frame
         _currentLerpRotationTime += Time.deltaTime;
+       
         if (_currentLerpRotationTime > maxLerpRotationTime || Circle.transform.eulerAngles.z == _finalAngle)
         {
             _currentLerpRotationTime = maxLerpRotationTime;
             _isStarted = false;
+            Debug.LogError("asdad" + _finalAngle);
             _startAngle = _finalAngle % 360;
 
-            GiveAwardByAngle();
-            StartCoroutine(HideCoinsDelta());
+            //GiveAwardByAngle();
+            Debug.LogError(result.AtaGain);
+            StartCoroutine(HideCoinsDelta(true, result.AtaGain));
         }
 
-        // Calculate current position using linear interpolation
         float t = _currentLerpRotationTime / maxLerpRotationTime;
 
-        // This formulae allows to speed up at start and speed down at the end of rotation.
-        // Try to change this values to customize the speed
         t = t * t * t * (t * (6f * t - 15f) + 10f);
 
         float angle = Mathf.Lerp(_startAngle, _finalAngle, t);
@@ -154,31 +139,42 @@ public class GameManager : MonoBehaviour
 
     private void RewardCoins(int awardCoins)
     {
-        CurrentCoinsAmount += awardCoins;    
+        CurrencyCoinsAmount += awardCoins;    
         StartCoroutine(UpdateCoinsAmount());
     }
 
-    private IEnumerator HideCoinsDelta()
-    {
-        yield return new WaitForSeconds(1f);
-        CoinsDeltaText.gameObject.SetActive(false);
+    private IEnumerator HideCoinsDelta(bool value, int awardCoins)
+    {       
+        if (value)
+        {
+            CoinsDeltaText.GetComponent<Text>().color = new Color(0, 255, 50, 255);
+            CoinsDeltaText.text = awardCoins.ToString();
+            yield return new WaitForSeconds(1f);
+            CoinsDeltaText.text = "";
+        }
+        else
+        {
+            CoinsDeltaText.GetComponent<Text>().color = new Color(255, 255, 255, 255);
+            CoinsDeltaText.text = "-" + TurnCost;
+            yield return new WaitForSeconds(1f);
+            CoinsDeltaText.text = "";
+        }
     }
 
     private IEnumerator UpdateCoinsAmount()
     {
-        // Animation for increasing and decreasing of coins amount
         const float seconds = 0.5f;
         float elapsedTime = 0;
 
         while (elapsedTime < seconds)
         {
-            CurrentCoinsText.text = Mathf.Floor(Mathf.Lerp(PreviousCoinsAmount, CurrentCoinsAmount, (elapsedTime / seconds))).ToString();
+            WalletAmountText.text = Mathf.Floor(Mathf.Lerp(PreviousCoinsAmount, CurrencyCoinsAmount, (elapsedTime / seconds))).ToString();
             elapsedTime += Time.deltaTime;
 
             yield return new WaitForEndOfFrame();
         }
 
-        PreviousCoinsAmount = CurrentCoinsAmount;
-        CurrentCoinsText.text = CurrentCoinsAmount.ToString();
+        PreviousCoinsAmount = CurrencyCoinsAmount;
+        WalletAmountText.text = CurrencyCoinsAmount.ToString();
     }
 }

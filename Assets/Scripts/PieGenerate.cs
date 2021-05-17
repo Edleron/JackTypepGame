@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,69 +23,49 @@ public class PieGenerate : MonoBehaviour
     #region Helper Metods
     public void AddNew()
     {
-        //Add a new index position to the end of our list
-        MyList.Add(new WheelCore("Harvey", -100, WheelCore.WinTypes.Lose, Color.white, "-100"));
+        MyList.Add(new WheelCore("Test", -100, WheelCore.WinTypes.Lose, Color.white, "-100"));
     }
     public void Remove(int index)
     {
-        //Remove an index position from our list at a point in our list array
         MyList.RemoveAt(index);
     }
 
     public void JusGenerate()
     {
         float filAmoundCalculated = (float)1 / MyList.Count;
-        Debug.LogError(filAmoundCalculated);
         float angleCalculated = 360 / MyList.Count;
-        for (int i = 0; i < MyList.Count; i++)
+        for (int i = 1; i <= MyList.Count; i++)
         {
             GameObject clone = Instantiate(PieDef, targetParents) as GameObject;
             clone.GetComponent<Image>().fillAmount = filAmoundCalculated;
-            clone.GetComponent<Image>().color = MyList[i].AnColor;
-            clone.GetComponent<RectTransform>().transform.Rotate(new Vector3(0, 0, i * angleCalculated));
-            clone.transform.GetChild(0).GetComponent<Text>().text = MyList[i].AnText;
+            clone.GetComponent<Image>().color = MyList[i - 1].AnColor;
+            clone.GetComponent<RectTransform>().transform.Rotate(new Vector3(0, 0, (i * angleCalculated) - 30));
+            clone.name = MyList[i - 1].AnName;
+            clone.transform.GetChild(0).GetComponent<Text>().text = MyList[i - 1].AnText;
         }
     }
-    #endregion
 
-    #region Wheel
-    [System.Serializable]
-    public class WheelCore : IComparable<WheelCore>
+    public ResultCore GetResult()
     {
-        public enum WinTypes { Won, Lose };
+        //Objenin Ref'i heap'de hep kalıcak Duzelt.
+        float listCount = (float)MyList.Count;
+        float angleCalculated = 360 / listCount;
 
-        public string AnName;
-        public int AnGain;
-        public WinTypes AnWinType;
-        public Color AnColor;
-        public string AnText;
-
-        public WheelCore()
+        List<float> angleList = new List<float>();
+        //int unCertainty = UnityEngine.Random.Range(60, 90);
+        for (int i = 1; i <= listCount; i++)
         {
-
+            angleList.Add((i * angleCalculated));
+            Debug.LogError(angleList[i - 1]);
         }
-
-        public WheelCore(string newName, int newGain, WinTypes newWinType, Color newColor, string newText)
-        {
-            AnName = newName;
-            AnGain = newGain;
-            AnWinType = newWinType;
-            AnColor = newColor;
-            AnText = newText;
-        }
-
-        //This method is required by the IComparable
-        //interface. 
-        public int CompareTo(WheelCore other)
-        {
-            if (other == null)
-            {
-                return 1;
-            }
-
-            //Return the difference in power.
-            return AnGain - other.AnGain;
-        }
+        int randomNumber = UnityEngine.Random.Range(-1, angleList.Count - 1);
+        Debug.LogError(randomNumber);
+        float FinalAngle = angleList[randomNumber];
+        ResultCore result = new ResultCore();
+        result.AtaFinalAngle = FinalAngle;
+        result.AtaGain = MyList[randomNumber].AnGain;
+        result.AtaStatus = (MyList[randomNumber].AnWinType == WheelCore.WinTypes.Won ? true : false);
+        return result;
     }
     #endregion
 }
